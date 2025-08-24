@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { LoginForm } from "@/components/auth/login-form"
 import { RegisterForm } from "@/components/auth/register-form"
-import { mockAuth } from "@/lib/mock-data"
+import { authService } from "@/lib/auth"
 import type { User } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,10 +15,17 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is already logged in
-    const user = mockAuth.getCurrentUser()
-    setCurrentUser(user)
+    const unsubscribe = authService.subscribe((state) => {
+      setCurrentUser(state.user)
+      setIsLoading(state.isLoading)
+    })
+
+    // Initialize with current state
+    const currentState = authService.getState()
+    setCurrentUser(currentState.user)
     setIsLoading(false)
+
+    return unsubscribe
   }, [])
 
   const handleLogin = (user: User) => {
@@ -30,7 +37,7 @@ export default function HomePage() {
   }
 
   const handleLogout = async () => {
-    await mockAuth.logout()
+    await authService.logout()
     setCurrentUser(null)
   }
 
@@ -178,28 +185,28 @@ export default function HomePage() {
           <Card>
             <CardHeader>
               <CardTitle>System Status</CardTitle>
-              <CardDescription>Current application status and next steps</CardDescription>
+              <CardDescription>Current application status and backend connectivity</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Database Schema</span>
-                  <span className="text-sm text-green-600">✓ Configured</span>
+                  <span className="text-sm">FastAPI Backend</span>
+                  <span className="text-sm text-yellow-600">⏳ Check localhost:8000</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Anthropic Claude API</span>
+                  <span className="text-sm text-yellow-600">⏳ Requires API Key</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Authentication System</span>
-                  <span className="text-sm text-green-600">✓ Active</span>
+                  <span className="text-sm text-green-600">✓ JWT Ready</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Candidate Dashboard</span>
+                  <span className="text-sm">Frontend Integration</span>
                   <span className="text-sm text-green-600">✓ Complete</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Recruiter Dashboard</span>
-                  <span className="text-sm text-green-600">✓ Complete</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Next: CV/JD Parsing</span>
+                  <span className="text-sm">Next: Database Setup</span>
                   <span className="text-sm text-yellow-600">⏳ Pending</span>
                 </div>
               </div>

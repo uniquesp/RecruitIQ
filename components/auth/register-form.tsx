@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { mockAuth } from "@/lib/mock-data"
+import { authService } from "@/lib/auth"
 import type { User } from "@/lib/types"
 
 interface RegisterFormProps {
@@ -31,14 +31,10 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: RegisterFormProps)
     setError("")
 
     try {
-      const user = await mockAuth.register(email, password, name, role)
-      if (user) {
-        onRegister(user)
-      } else {
-        setError("Registration failed. Please try again.")
-      }
+      const user = await authService.register(email, password, name, role)
+      onRegister(user)
     } catch (err) {
-      setError("Registration failed. Please try again.")
+      setError(err instanceof Error ? err.message : "Registration failed. Please try again.")
     } finally {
       setIsLoading(false)
     }

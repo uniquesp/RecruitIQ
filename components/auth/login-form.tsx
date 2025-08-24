@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { mockAuth } from "@/lib/mock-data"
+import { authService } from "@/lib/auth"
 import type { User } from "@/lib/types"
 
 interface LoginFormProps {
@@ -28,14 +28,10 @@ export function LoginForm({ onLogin, onSwitchToRegister }: LoginFormProps) {
     setError("")
 
     try {
-      const user = await mockAuth.login(email, password)
-      if (user) {
-        onLogin(user)
-      } else {
-        setError("Invalid email or password")
-      }
+      const user = await authService.login(email, password)
+      onLogin(user)
     } catch (err) {
-      setError("Login failed. Please try again.")
+      setError(err instanceof Error ? err.message : "Login failed. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -94,11 +90,11 @@ export function LoginForm({ onLogin, onSwitchToRegister }: LoginFormProps) {
         </div>
 
         <div className="mt-4 p-3 bg-muted rounded-lg">
-          <p className="text-xs text-muted-foreground mb-2">Demo Accounts:</p>
+          <p className="text-xs text-muted-foreground mb-2">Demo Account:</p>
           <div className="text-xs space-y-1">
-            <div>Candidate: john.candidate@email.com</div>
-            <div>Recruiter: sarah.recruiter@company.com</div>
+            <div>Email: test@example.com</div>
             <div>Password: password123</div>
+            <div className="text-yellow-600">Note: Backend must be running on localhost:8000</div>
           </div>
         </div>
       </CardContent>
