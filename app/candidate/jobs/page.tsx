@@ -1,23 +1,37 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { mockJobs } from "@/lib/mock-data"
-import type { Job } from "@/lib/types"
+import { apiService } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Search, MapPin, Clock, DollarSign, Building } from "lucide-react"
 import Link from "next/link"
+import { useToast } from "@/hooks/use-toast"
+
+interface Job {
+  id: string
+  title: string
+  company: string
+  description: string
+  requirements: string[]
+  skills: string[]
+  experience_required: string
+  location: string
+  salary_range?: string
+  created_at: string
+}
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
 
   useEffect(() => {
-    setJobs(mockJobs)
-    setFilteredJobs(mockJobs)
+    loadJobs()
   }, [])
 
   useEffect(() => {
@@ -29,6 +43,35 @@ export default function JobsPage() {
     )
     setFilteredJobs(filtered)
   }, [searchTerm, jobs])
+
+  const loadJobs = async () => {
+    try {
+      setIsLoading(true)
+      const jobsData = await apiService.getJobs()
+      setJobs(jobsData)
+      setFilteredJobs(jobsData)
+    } catch (error) {
+      console.error("Failed to load jobs:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load jobs. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading jobs...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,17 +121,17 @@ export default function JobsPage() {
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        <span>{job.type}</span>
+                        <span>{job.experience_required}</span>
                       </div>
-                      {job.salary && (
+                      {job.salary_range && (
                         <div className="flex items-center gap-1">
                           <DollarSign className="h-4 w-4" />
-                          <span>{job.salary}</span>
+                          <span>{job.salary_range}</span>
                         </div>
                       )}
                     </div>
                   </div>
-                  <Badge variant={job.status === "active" ? "default" : "secondary"}>{job.status}</Badge>
+                  <Badge variant="default">Active</Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -97,14 +140,14 @@ export default function JobsPage() {
                 <div className="mb-4">
                   <h4 className="font-medium mb-2">Required Skills:</h4>
                   <div className="flex flex-wrap gap-2">
-                    {job.requirements.slice(0, 6).map((skill, index) => (
+                    {job.skills.slice(0, 6).map((skill, index) => (
                       <Badge key={index} variant="outline" className="text-xs">
                         {skill}
                       </Badge>
                     ))}
-                    {job.requirements.length > 6 && (
+                    {job.skills.length > 6 && (
                       <Badge variant="outline" className="text-xs">
-                        +{job.requirements.length - 6} more
+                        +{job.skills.length - 6} more
                       </Badge>
                     )}
                   </div>
@@ -112,7 +155,7 @@ export default function JobsPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-muted-foreground">
-                    Posted {new Date(job.createdAt).toLocaleDateString()}
+                    Posted {new Date(job.created_at).toLocaleDateString()}
                   </div>
                   <div className="flex gap-2">
                     <Link href={`/candidate/jobs/${job.id}`}>
@@ -120,7 +163,9 @@ export default function JobsPage() {
                         View Details
                       </Button>
                     </Link>
-                    <Button size="sm">Apply Now</Button>
+                    <Link href={`/candidate/jobs/${job.id}`}>
+                      <Button size="sm">Apply Now</Button>
+                    </Link>
                   </div>
                 </div>
               </CardContent>
@@ -128,7 +173,7 @@ export default function JobsPage() {
           ))}
         </div>
 
-        {filteredJobs.length === 0 && (
+        {filteredJobs.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <div className="text-muted-foreground mb-4">
               <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />

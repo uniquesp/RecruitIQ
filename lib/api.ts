@@ -219,13 +219,14 @@ class ApiService {
       Array<{
         id: string
         title: string
+        company: string
         description: string
-        required_skills: string[]
+        requirements: string[]
+        skills: string[]
         experience_required: string
-        salary_range?: string
         location: string
+        salary_range?: string
         created_at: string
-        created_by: string
       }>
     >("/jobs")
   }
@@ -234,27 +235,85 @@ class ApiService {
     return this.request<{
       id: string
       title: string
+      company: string
       description: string
-      required_skills: string[]
+      requirements: string[]
+      skills: string[]
       experience_required: string
-      salary_range?: string
       location: string
+      salary_range?: string
       created_at: string
-      created_by: string
+      recruiter?: {
+        id: string
+        name: string
+      }
     }>(`/jobs/${jobId}`)
+  }
+
+  async createJob(jobData: {
+    title: string
+    company: string
+    description: string
+    requirements: string[]
+    skills: string[]
+    experience_required: string
+    location: string
+    salary_range?: string
+  }) {
+    return this.request<{
+      id: string
+      title: string
+      company: string
+      message: string
+    }>("/jobs", {
+      method: "POST",
+      body: JSON.stringify(jobData),
+    })
   }
 
   async submitApplication(jobId: string, cvText: string, coverLetter?: string) {
     return this.request<{
       id: string
-      job_id: string
-      candidate_id: string
+      job_title: string
       status: string
-      created_at: string
+      message: string
     }>("/applications", {
       method: "POST",
       body: JSON.stringify({ job_id: jobId, cv_text: cvText, cover_letter: coverLetter }),
     })
+  }
+
+  async getCandidateApplications(candidateId: string) {
+    return this.request<
+      Array<{
+        id: string
+        job: {
+          id: string
+          title: string
+          company: string
+        }
+        status: string
+        overall_score?: number
+        created_at: string
+      }>
+    >(`/applications/candidate/${candidateId}`)
+  }
+
+  async getJobApplications(jobId: string) {
+    return this.request<
+      Array<{
+        id: string
+        candidate: {
+          id: string
+          name: string
+          email: string
+        }
+        status: string
+        overall_score?: number
+        cv_analysis?: any
+        created_at: string
+      }>
+    >(`/applications/job/${jobId}`)
   }
 
   // Health check
